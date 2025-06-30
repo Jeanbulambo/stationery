@@ -1,0 +1,145 @@
+/* 🌐 Style global */
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f4f6f9;
+  margin: 0;
+  padding: 0;
+  color: #333;
+}
+
+h1, h2, h3, h4, h5 {
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.container {
+  max-width: 960px;
+  margin: auto;
+  padding: 20px;
+}
+
+a {
+  text-decoration: none;
+  color: #0d6efd;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+button {
+  min-width: 120px;
+}
+
+/* 📋 Formulaires */
+input, select {
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+label {
+  font-weight: 500;
+}
+
+/* 📦 Tableau (facture, stock) */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+.table th, .table td {
+  border: 1px solid #dee2e6;
+  padding: 10px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.table th {
+  background-color: #f1f1f1;
+}
+
+/* 🧾 Invoice (facture visuelle) */
+.invoice-container {
+  background: white;
+  padding: 20px;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+}
+
+/* 🔘 Boutons utilitaires */
+.btn {
+  border-radius: 4px;
+  padding: 6px 14px;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.btn-primary {
+  background-color: #0d6efd;
+  border: none;
+  color: white;
+}
+
+.btn-success {
+  background-color: #198754;
+  border: none;
+  color: white;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  border: none;
+  color: white;
+}
+
+.btn-outline-primary {
+  border: 1px solid #0d6efd;
+  color: #0d6efd;
+  background: transparent;
+}
+
+.btn-outline-primary:hover {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.me-2 {
+  margin-right: 10px;
+}
+
+/* 🎯 Impression */
+@media print {
+  nav, .btn, .no-print {
+    display: none !important;
+  }
+
+  body {
+    background-color: white;
+    color: black;
+  }
+
+  .invoice-container, .table {
+    box-shadow: none;
+    border: none;
+  }
+
+  .table th, .table td {
+    font-size: 12px;
+    border: 1px solid #ccc;
+  }
+
+  h2 {
+    margin-top: 0;
+  }
+
+  .container {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+}
