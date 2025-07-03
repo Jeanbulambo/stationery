@@ -1,7 +1,7 @@
-// ✅ Version corrigée de Produits.jsx
 import React, { useEffect, useState } from 'react';
 import { getAllItems, addItem, updateItem, deleteItem } from '../services/indexedDB';
 import { addApprovisionnement } from '../services/indexedDB';
+import * as XLSX from 'xlsx';
 
 export default function Produits() {
   const [produits, setProduits] = useState([]);
@@ -94,9 +94,79 @@ export default function Produits() {
     chargerProduits();
   };
 
+  // ✅ Export Excel
+  const exporterProduitsExcel = () => {
+    const ws = XLSX.utils.json_to_sheet(produits);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Produits');
+    XLSX.writeFile(wb, 'produits_export.xlsx');
+  };
+
+  // ✅ Import Excel avec validation et dédoublonnage
+  const importerProduitsExcel = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const produitsImportés = XLSX.utils.sheet_to_json(sheet);
+
+      let ajoutés = 0, ignorés = 0;
+
+      for (let produit of produitsImportés) {
+        const nom = produit.nom?.trim();
+        const prix = parseFloat(produit.prix);
+        const stock = parseInt(produit.stock);
+
+        if (!nom || isNaN(prix) || isNaN(stock)) {
+          ignorés++;
+          continue;
+        }
+
+        const existe = produits.find(p => p.nom.toLowerCase() === nom.toLowerCase());
+        if (existe) {
+          ignorés++;
+          continue;
+        }
+
+        await addItem('produits', { nom, prix, stock });
+        ajoutés++;
+      }
+
+      alert(`Import terminé : ${ajoutés} ajoutés, ${ignorés} ignorés`);
+      chargerProduits();
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  // ✅ Template Excel vide
+  const telechargerTemplateExcel = () => {
+    const donnees = [{ nom: '', prix: '', stock: '' }];
+    const ws = XLSX.utils.json_to_sheet(donnees);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Template');
+    XLSX.writeFile(wb, 'template_produits.xlsx');
+  };
+
   return (
     <div className="container my-4">
       <h3 className="mb-4">🛒 Produits & Approvisionnement (en USD)</h3>
+
+      <div className="mb-4">
+        <label className="btn btn-outline-primary me-2">
+          📥 Importer Excel
+          <input type="file" accept=".xlsx, .xls" hidden onChange={importerProduitsExcel} />
+        </label>
+        <button className="btn btn-outline-success me-2" onClick={exporterProduitsExcel}>
+          📤 Exporter Excel
+        </button>
+        <button className="btn btn-outline-secondary" onClick={telechargerTemplateExcel}>
+          📄 Télécharger modèle Excel
+        </button>
+      </div>
 
       <form className="row g-3 align-items-end mb-4" onSubmit={handleSubmit}>
         <div className="col-12 col-md-3">
@@ -120,7 +190,6 @@ export default function Produits() {
               <input
                 type="text"
                 className="form-control"
-                placeholder="Nom du produit"
                 value={form.nom}
                 onChange={(e) => setForm({ ...form, nom: e.target.value })}
               />
@@ -130,7 +199,6 @@ export default function Produits() {
               <input
                 type="number"
                 className="form-control"
-                placeholder="Prix en $"
                 min="0"
                 step="0.01"
                 value={form.prix}
@@ -145,7 +213,6 @@ export default function Produits() {
           <input
             type="number"
             className="form-control"
-            placeholder="Quantité"
             min="1"
             value={form.quantite}
             onChange={(e) => setForm({ ...form, quantite: e.target.value })}
@@ -157,7 +224,6 @@ export default function Produits() {
           <input
             type="text"
             className="form-control"
-            placeholder="Fournisseur"
             value={form.fournisseur}
             onChange={(e) => setForm({ ...form, fournisseur: e.target.value })}
           />
@@ -193,16 +259,10 @@ export default function Produits() {
                   )}
                 </td>
                 <td>
-                  <button
-                    className="btn btn-sm btn-warning me-2 mb-2 mb-md-0"
-                    onClick={() => handleUpdate(p)}
-                  >
+                  <button className="btn btn-sm btn-warning me-2" onClick={() => handleUpdate(p)}>
                     Modifier stock/prix
                   </button>
-                  <button
-                    className="btn btn-sm btn-danger"
-                    onClick={() => handleDelete(p.id)}
-                  >
+                  <button className="btn btn-sm btn-danger" onClick={() => handleDelete(p.id)}>
                     Supprimer
                   </button>
                 </td>
@@ -210,9 +270,7 @@ export default function Produits() {
             ))}
             {produits.length === 0 && (
               <tr>
-                <td colSpan="4" className="text-center text-muted">
-                  Aucun produit trouvé.
-                </td>
+                <td colSpan="4" className="text-center text-muted">Aucun produit trouvé.</td>
               </tr>
             )}
           </tbody>
