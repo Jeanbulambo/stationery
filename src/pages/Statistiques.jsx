@@ -31,10 +31,14 @@ export default function Statistiques() {
   }, []);
 
   return (
-    <div className="container">
-      <h2>Statistiques de vente</h2>
-      <p><strong>Total général des ventes :</strong> {totalVentes} $</p>
-      <StatsChart data={stats} />
+    <div className="container my-4">
+      <h2 className="mb-3">📊 Statistiques de vente</h2>
+      <p className="fs-5">
+        <strong>Total général des ventes :</strong> {totalVentes.toFixed(2)} $
+      </p>
+      <div className="card p-3 shadow-sm">
+        <StatsChart data={stats} />
+      </div>
     </div>
   );
 }

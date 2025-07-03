@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { getAllItems, updateItem } from '../services/indexedDB';
-import { addFacture } from '../services/indexedDB';
+import { getAllItems } from '../services/indexedDB';
 import SaleForm from '../components/SaleForm';
 import Invoice from '../components/Invoice';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
 export default function Vente() {
   const [produits, setProduits] = useState([]);
   const [panier, setPanier] = useState([]);
+  const [devise, setDevise] = useState(localStorage.getItem('devise') || 'USD');
+  const [tauxFC, setTauxFC] = useState(Number(localStorage.getItem('tauxFC')) || 2700);
 
   useEffect(() => {
     getAllItems('produits').then(setProduits);
@@ -35,61 +34,71 @@ export default function Vente() {
 
   const total = panier.reduce((sum, p) => sum + p.prix * p.quantite, 0);
 
-  const enregistrerFacture = async () => {
-    if (panier.length === 0) return alert('Le panier est vide');
-
-    await addFacture({ panier, total, date: new Date().toISOString() });
-
-    for (let item of panier) {
-      const produit = produits.find(p => p.id === item.id);
-      const nouveauStock = produit.stock - item.quantite;
-      await updateItem('produits', { ...produit, stock: nouveauStock });
-    }
-
-    setPanier([]);
-    getAllItems('produits').then(setProduits);
-    alert('Facture enregistrée.');
-  };
-
-  const exporterPDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.text("Facture de vente - Papeterie", 14, 20);
-
-    const tableRows = panier.map(item => [
-      item.nom,
-      item.quantite,
-      item.prix.toFixed(2),
-      (item.quantite * item.prix).toFixed(2),
-    ]);
-
-    autoTable(doc, {
-      head: [['Produit', 'Quantité', 'Prix', 'Total']],
-      body: tableRows,
-      startY: 30,
-    });
-
-    doc.text(`Total général : ${total.toFixed(2)} $`, 14, doc.lastAutoTable.finalY + 10);
-    const date = new Date().toISOString().slice(0, 10);
-    doc.save(`facture_${date}.pdf`);
-  };
-
   return (
-    <div>
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h2>Vente</h2>
-        <div>
-          <button className="btn btn-outline-primary me-2" onClick={exporterPDF}>
-            Exporter la facture en PDF
-          </button>
-          <button className="btn btn-success" onClick={enregistrerFacture}>
-            Enregistrer la facture
-          </button>
+    <div className="container-fluid vh-100 d-flex flex-column">
+      {/* ✅ ENTÊTE FIXE */}
+      <div className="row sticky-top bg-white px-3 py-2 border-bottom" style={{ zIndex: 1030 }}>
+        <div className="col-md-4">
+          <h2 className="mb-0">🧾 Vente</h2>
+        </div>
+        <div className="col-md-8">
+          <div className="row g-2 align-items-center">
+            <div className="col-auto">
+              <select
+                className="form-select"
+                value={devise}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setDevise(value);
+                  localStorage.setItem('devise', value);
+                }}
+              >
+                <option value="USD">Dollars ($)</option>
+                <option value="FC">Francs congolais (FC)</option>
+              </select>
+            </div>
+
+            {devise === 'FC' && (
+              <div className="col-auto">
+                <input
+                  type="number"
+                  className="form-control"
+                  style={{ minWidth: 120 }}
+                  value={tauxFC}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value);
+                    setTauxFC(value);
+                    localStorage.setItem('tauxFC', value);
+                  }}
+                  placeholder="Taux USD → FC"
+                  min={1}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      <SaleForm produits={produits} onAdd={ajouterAuPanier} />
-      <Invoice panier={panier} total={total} onRemove={supprimerDuPanier} />
+      {/* ✅ FORMULAIRE DE VENTE */}
+      <div className="sticky-top bg-light px-3 pt-2 pb-3 border-bottom" style={{ top: '56px', zIndex: 1020 }}>
+        <SaleForm produits={produits} onAdd={ajouterAuPanier} />
+      </div>
+
+      {/* ✅ TABLEAU FACTURE */}
+      <div className="flex-grow-1 overflow-auto px-3 py-3" style={{ maxHeight: 'calc(100vh - 170px)' }}>
+        <div className="table-responsive">
+          <Invoice
+            panier={panier}
+            total={total}
+            onRemove={supprimerDuPanier}
+            devise={devise}
+            tauxFC={tauxFC}
+            produits={produits}
+            setProduits={setProduits}
+            viderPanier={() => setPanier([])}
+          />
+        </div>
+      </div>
     </div>
   );
 }

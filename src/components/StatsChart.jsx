@@ -5,17 +5,19 @@ import {
 
 export default function StatsChart({ data }) {
   return (
-    <div style={{ width: '100%', height: 400 }}>
-      <h4>Graphique des ventes</h4>
-      <ResponsiveContainer>
-        <LineChart data={data}>
-          <Line type="monotone" dataKey="total" stroke="#007bff" />
-          <CartesianGrid stroke="#ccc" />
-          <XAxis dataKey="date" />
-          <YAxis />
-          <Tooltip />
-        </LineChart>
-      </ResponsiveContainer>
+    <div className="card p-3 my-4">
+      <h5 className="mb-3">📊 Graphique des ventes</h5>
+      <div style={{ width: '100%', height: '300px' }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data} margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
+            <Line type="monotone" dataKey="total" stroke="#007bff" strokeWidth={2} />
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+            <YAxis tick={{ fontSize: 12 }} />
+            <Tooltip />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }

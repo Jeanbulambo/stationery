@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@popperjs/core": "^2.11.8",
+    "bcryptjs": "^3.0.2",
     "bootstrap": "^5.3.7",
     "buffer": "^6.0.3",
     "html2canvas": "^1.4.1",
