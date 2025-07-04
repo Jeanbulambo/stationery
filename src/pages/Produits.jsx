@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getAllItems, addItem, updateItem, deleteItem } from '../services/indexedDB';
-import { addApprovisionnement } from '../services/indexedDB';
+import { getAllItems, addItem, updateItem, deleteItem, addApprovisionnement } from '../services/indexedDB';
 import * as XLSX from 'xlsx';
 
 export default function Produits() {
@@ -13,57 +12,40 @@ export default function Produits() {
     fournisseur: ''
   });
 
+  const [page, setPage] = useState(1);
+  const lignesParPage = 5;
+
   useEffect(() => {
     chargerProduits();
   }, []);
 
   const chargerProduits = () => {
-    getAllItems('produits').then(setProduits);
+    getAllItems('produits').then(data => {
+      setProduits(data);
+      setPage(1); // Réinitialise la page
+    });
   };
 
-  const afficherPrixUSD = (prix) => `${prix.toLocaleString('en-US', { minimumFractionDigits: 2 })} $`;
+  const afficherPrixUSD = (prix) =>
+    `${prix.toLocaleString('en-US', { minimumFractionDigits: 2 })} $`;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const { produitId, nom, prix, quantite, fournisseur } = form;
-
     if (!quantite || !fournisseur) return alert("Veuillez saisir la quantité et le fournisseur");
-
     const date = new Date().toISOString();
 
     if (produitId) {
       const produit = produits.find(p => p.id === parseInt(produitId));
       const nouveauStock = produit.stock + parseInt(quantite);
       await updateItem('produits', { ...produit, stock: nouveauStock });
-
-      await addApprovisionnement({
-        date,
-        produitId: produit.id,
-        produitNom: produit.nom,
-        quantite: parseInt(quantite),
-        fournisseur,
-      });
-
+      await addApprovisionnement({ date, produitId: produit.id, produitNom: produit.nom, quantite: parseInt(quantite), fournisseur });
       alert(`Approvisionnement de "${produit.nom}" effectué via ${fournisseur}`);
     } else {
       if (!nom || !prix) return alert("Veuillez remplir les champs du nouveau produit");
-
-      const nouveauProduit = {
-        nom,
-        prix: parseFloat(prix),
-        stock: parseInt(quantite)
-      };
-
+      const nouveauProduit = { nom, prix: parseFloat(prix), stock: parseInt(quantite) };
       const id = await addItem('produits', nouveauProduit);
-
-      await addApprovisionnement({
-        date,
-        produitId: id,
-        produitNom: nom,
-        quantite: parseInt(quantite),
-        fournisseur,
-      });
-
+      await addApprovisionnement({ date, produitId: id, produitNom: nom, quantite: parseInt(quantite), fournisseur });
       alert(`Produit "${nom}" ajouté avec approvisionnement via ${fournisseur}`);
     }
 
@@ -81,7 +63,6 @@ export default function Produits() {
   const handleUpdate = async (produit) => {
     const nouveauStock = prompt(`Modifier stock pour ${produit.nom}:`, produit.stock);
     if (nouveauStock === null) return;
-
     const nouveauPrix = prompt(`Modifier prix en USD pour ${produit.nom} (actuel: ${afficherPrixUSD(produit.prix)}):`, produit.prix);
     if (nouveauPrix === null) return;
 
@@ -90,11 +71,9 @@ export default function Produits() {
       stock: parseInt(nouveauStock),
       prix: parseFloat(nouveauPrix),
     });
-
     chargerProduits();
   };
 
-  // ✅ Export Excel
   const exporterProduitsExcel = () => {
     const ws = XLSX.utils.json_to_sheet(produits);
     const wb = XLSX.utils.book_new();
@@ -102,7 +81,6 @@ export default function Produits() {
     XLSX.writeFile(wb, 'produits_export.xlsx');
   };
 
-  // ✅ Import Excel avec validation et dédoublonnage
   const importerProduitsExcel = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -115,12 +93,10 @@ export default function Produits() {
       const produitsImportés = XLSX.utils.sheet_to_json(sheet);
 
       let ajoutés = 0, ignorés = 0;
-
       for (let produit of produitsImportés) {
         const nom = produit.nom?.trim();
         const prix = parseFloat(produit.prix);
         const stock = parseInt(produit.stock);
-
         if (!nom || isNaN(prix) || isNaN(stock)) {
           ignorés++;
           continue;
@@ -142,7 +118,6 @@ export default function Produits() {
     reader.readAsArrayBuffer(file);
   };
 
-  // ✅ Template Excel vide
   const telechargerTemplateExcel = () => {
     const donnees = [{ nom: '', prix: '', stock: '' }];
     const ws = XLSX.utils.json_to_sheet(donnees);
@@ -150,6 +125,9 @@ export default function Produits() {
     XLSX.utils.book_append_sheet(wb, ws, 'Template');
     XLSX.writeFile(wb, 'template_produits.xlsx');
   };
+
+  const totalPages = Math.ceil(produits.length / lignesParPage);
+  const produitsPagines = produits.slice((page - 1) * lignesParPage, page * lignesParPage);
 
   return (
     <div className="container my-4">
@@ -247,28 +225,29 @@ export default function Produits() {
             </tr>
           </thead>
           <tbody>
-            {produits.map((p) => (
-              <tr key={p.id}>
-                <td>{p.nom}</td>
-                <td>{afficherPrixUSD(p.prix)}</td>
-                <td>
-                  {p.stock <= 5 ? (
-                    <span className="badge bg-danger">Stock faible: {p.stock}</span>
-                  ) : (
-                    p.stock
-                  )}
-                </td>
-                <td>
-                  <button className="btn btn-sm btn-warning me-2" onClick={() => handleUpdate(p)}>
-                    Modifier stock/prix
-                  </button>
-                  <button className="btn btn-sm btn-danger" onClick={() => handleDelete(p.id)}>
-                    Supprimer
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {produits.length === 0 && (
+            {produitsPagines.length > 0 ? (
+              produitsPagines.map((p) => (
+                <tr key={p.id}>
+                  <td>{p.nom}</td>
+                  <td>{afficherPrixUSD(p.prix)}</td>
+                  <td>
+                    {p.stock <= 5 ? (
+                      <span className="badge bg-danger">Stock faible: {p.stock}</span>
+                    ) : (
+                      p.stock
+                    )}
+                  </td>
+                  <td>
+                    <button className="btn btn-sm btn-warning me-2" onClick={() => handleUpdate(p)}>
+                      Modifier stock/prix
+                    </button>
+                    <button className="btn btn-sm btn-danger" onClick={() => handleDelete(p.id)}>
+                      Supprimer
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
               <tr>
                 <td colSpan="4" className="text-center text-muted">Aucun produit trouvé.</td>
               </tr>
@@ -276,6 +255,27 @@ export default function Produits() {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination dynamique */}
+      {totalPages > 1 && (
+        <div className="d-flex justify-content-between align-items-center mt-3">
+          <button
+            className="btn btn-outline-secondary"
+            disabled={page === 1}
+            onClick={() => setPage(page - 1)}
+          >
+            ◀ Précédent
+          </button>
+          <span>Page {page} / {totalPages}</span>
+          <button
+            className="btn btn-outline-secondary"
+            disabled={page === totalPages}
+            onClick={() => setPage(page + 1)}
+          >
+            Suivant ▶
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import bcrypt from 'bcryptjs';
 import { getAllUtilisateurs } from '../services/indexedDB';
 import { initialiserAdminParDéfaut } from '../init/seedAdmin';
-import backgroundImage from '../assets/logoktw.jpeg'; // ✅ Import de l’image
+import backgroundImage from '../assets/logoktw.jpeg'; // ✅ Image locale
 
 export default function Login({ setUser }) {
   const [nom, setNom] = useState('');
@@ -11,14 +11,9 @@ export default function Login({ setUser }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    async function init() {
-      try {
-        await initialiserAdminParDéfaut();
-      } catch (e) {
-        console.error("Erreur lors de l'initialisation admin par défaut", e);
-      }
-    }
-    init();
+    initialiserAdminParDéfaut().catch((e) =>
+      console.error("Erreur lors de l'initialisation admin par défaut", e)
+    );
   }, []);
 
   const handleLogin = async () => {
@@ -67,32 +62,32 @@ export default function Login({ setUser }) {
 
   return (
     <div
-      className="vh-100 vw-100 d-flex justify-content-center align-items-center"
+      className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
       style={{
         backgroundImage: `url(${backgroundImage})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        position: 'relative',
+        overflow: 'hidden',
       }}
     >
-      {/* Overlay sombre pour lisibilité */}
+      {/* Overlay sombre */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.4)', // ← atténue l’image
+          backgroundColor: 'rgba(0, 0, 0, 0.4)',
           zIndex: 0,
         }}
       />
 
+      {/* Carte de connexion */}
       <div
         className="card shadow p-4"
         style={{
           maxWidth: 400,
           width: '100%',
-          zIndex: 1, // ← au-dessus de l’overlay
-          backgroundColor: 'rgba(255, 255, 255, 0.95)', // ← légèrement transparent
+          zIndex: 1,
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
           borderRadius: '10px',
         }}
       >

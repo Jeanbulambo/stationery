@@ -6,6 +6,8 @@ export default function HistoriqueApprovisionnements() {
   const [produits, setProduits] = useState([]);
   const [filtreProduit, setFiltreProduit] = useState('');
   const [filtreFournisseur, setFiltreFournisseur] = useState('');
+  const [page, setPage] = useState(1);
+  const lignesParPage = 10;
 
   useEffect(() => {
     chargerDonnees();
@@ -19,15 +21,30 @@ export default function HistoriqueApprovisionnements() {
   };
 
   const getNomProduit = (id) => {
-    const produit = produits.find(p => p.id === id);
+    const produit = produits.find(p => String(p.id) === String(id));
     return produit ? produit.nom : 'Inconnu';
   };
 
   const approFiltres = approvisionnements.filter((a) => {
-    const filtreParProduit = filtreProduit ? a.produitId === parseInt(filtreProduit) : true;
+    const filtreParProduit = filtreProduit ? String(a.produitId) === String(filtreProduit) : true;
     const filtreParFournisseur = filtreFournisseur ? a.fournisseur.toLowerCase().includes(filtreFournisseur.toLowerCase()) : true;
     return filtreParProduit && filtreParFournisseur;
   });
+
+  const totalPages = Math.ceil(approFiltres.length / lignesParPage);
+  const approPagines = approFiltres.slice((page - 1) * lignesParPage, page * lignesParPage);
+
+  const handlePageChange = (direction) => {
+    if (direction === 'prev' && page > 1) {
+      setPage(page - 1);
+    } else if (direction === 'next' && page < totalPages) {
+      setPage(page + 1);
+    }
+  };
+
+  useEffect(() => {
+    setPage(1); // Réinitialiser à la première page quand on filtre
+  }, [filtreProduit, filtreFournisseur]);
 
   return (
     <div className="container my-4">
@@ -71,12 +88,12 @@ export default function HistoriqueApprovisionnements() {
               </tr>
             </thead>
             <tbody>
-              {approFiltres.length === 0 ? (
+              {approPagines.length === 0 ? (
                 <tr>
                   <td colSpan="4" className="text-center">Aucun approvisionnement trouvé.</td>
                 </tr>
               ) : (
-                approFiltres.map((a) => (
+                approPagines.map((a) => (
                   <tr key={a.id}>
                     <td>{a.date || 'Non spécifiée'}</td>
                     <td>{getNomProduit(a.produitId)}</td>
@@ -88,6 +105,27 @@ export default function HistoriqueApprovisionnements() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {approFiltres.length > lignesParPage && (
+          <div className="d-flex justify-content-between align-items-center mt-3">
+            <button
+              className="btn btn-outline-secondary"
+              onClick={() => handlePageChange('prev')}
+              disabled={page === 1}
+            >
+              ◀ Précédent
+            </button>
+            <span>Page {page} / {totalPages}</span>
+            <button
+              className="btn btn-outline-secondary"
+              onClick={() => handlePageChange('next')}
+              disabled={page === totalPages}
+            >
+              Suivant ▶
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
