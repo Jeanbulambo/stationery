@@ -23,12 +23,11 @@ export default function Navbar({ user, setUser }) {
       <NavLink className="navbar-brand d-flex align-items-center me-4" to="/">
         <img
           src={logo}
-          alt="Logo"
+          alt="w2w"
           height="35"
           className="me-2 rounded"
           style={{ objectFit: 'cover' }}
         />
-        Papeterie
       </NavLink>
 
       <button
@@ -54,7 +53,7 @@ export default function Navbar({ user, setUser }) {
           </li>
           <li className="nav-item">
             <NavLink to="/statistiques" className={lienActif}>
-              Statistiques
+              Statistiques de ventes
             </NavLink>
           </li>
 
@@ -62,17 +61,17 @@ export default function Navbar({ user, setUser }) {
             <>
               <li className="nav-item">
                 <NavLink to="/produits" className={lienActif}>
-                  Produits
+                  Approvisionnement
                 </NavLink>
               </li>
               <li className="nav-item">
                 <NavLink to="/approvisionnements" className={lienActif}>
-                  Approvisionnements
+                  Historique d'approv
                 </NavLink>
               </li>
               <li className="nav-item">
                 <NavLink to="/factures" className={lienActif}>
-                  Factures
+                  Historique de facturation
                 </NavLink>
               </li>
               <li className="nav-item">
