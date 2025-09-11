@@ -37,6 +37,7 @@ function App() {
     setUser(null);
   };
 
+  // 👉 Route réservée uniquement à l'admin
   const AdminRoute = ({ element }) => {
     return user?.role === 'admin' ? element : <AccessDenied />;
   };
@@ -58,10 +59,13 @@ function App() {
               <Route path="/" element={<Dashboard user={user} />} />
               <Route path="/vente" element={<Vente />} />
               <Route path="/statistiques" element={<Statistiques />} />
-              <Route path="/produits" element={<AdminRoute element={<Produits />} />} />
-              <Route path="/approvisionnements" element={<AdminRoute element={<HistoriqueApprovisionnements />} />} />
+              <Route path="/produits" element={<Produits />} />
+              <Route path="/approvisionnements" element={<HistoriqueApprovisionnements />} />
+              <Route path="/factures" element={<HistoriqueFactures />} />
+
+              {/* 🚨 Seule page réservée aux admins */}
               <Route path="/utilisateurs" element={<AdminRoute element={<Utilisateurs />} />} />
-              <Route path="/factures" element={<AdminRoute element={<HistoriqueFactures />} />} />
+
               <Route path="/login" element={<Navigate to="/" replace />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </>
